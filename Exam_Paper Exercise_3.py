@@ -10,34 +10,38 @@ Created on Thu Dec 10 09:12:26 2020
 import numpy as np
 import os
 
-counterDict={}
-separate_text_documents = {}
-path = "Test_textfiles/"
-all_files = os.listdir(path)
-for file in all_files:
-   # open the file and then call .read() to get the text
-   text = []
-   with open(os.path.join(path, file)) as f:
-      for line in f:
-   # removing their punctuation
-        words = line.replace('.','').replace('\'','').replace(',','').lower().split()
-        for word in words:
-            text.append(word)
-            if word not in counterDict:
-                counterDict[word] = 1
-            else:
-                counterDict[word] = counterDict[word] + 1
-   separate_text_documents[file] = text
-   text = []
+
+# building a word dictionary from the input list of documents
+def compute_dict(path):
+    
+    counterDict={}
+    separate_text_documents = {}
+    
+    all_files = os.listdir(path)
+    for file in all_files:
+       # open the file and then call .read() to get the text
+       text = []
+       with open(os.path.join(path, file)) as f:
+          for line in f:
+       # removing their punctuation
+            words = line.replace('.','').replace('\'','').replace(',','').lower().split()
+            for word in words:
+                text.append(word)
+                if word not in counterDict:
+                    counterDict[word] = 1
+                else:
+                    counterDict[word] = counterDict[word] + 1
+       separate_text_documents[file] = text
+    return counterDict, separate_text_documents
 
 
 # creating a word vector for each document
-def create_word_vectors(word_dict, documents):
+def create_word_vectors(counterDict, documents):
     list_of_word_vectors = {}
     
     for file in documents:
         word_vector = []
-        for key in word_dict:
+        for key in counterDict:
             if key in documents[file]:
                 word_vector.append(1)
             else:
@@ -48,7 +52,7 @@ def create_word_vectors(word_dict, documents):
 #provide a list of documents that are similar to the given search
 # document, in descending order of their similarity with the search document
 
-def examine_similarity(word_vectors,search_doc):
+def examine_similarity(counterDict, word_vectors,search_doc):
     #turn the search document into a word vector
     cleaned_search_doc = []
     words = search_doc.replace('.','').replace('\'','').replace(',','').lower().split()
@@ -70,3 +74,18 @@ def examine_similarity(word_vectors,search_doc):
     #order the list of documents into a descending order based on the dotproduct
     ordered_list = dict(sorted(results.items(), key=lambda item: item[1], reverse=True))
     return ordered_list.keys()
+
+
+#The final function to call
+def text_similarity(path, search_doc):
+    counterDict, documents = compute_dict(path)
+    list_of_word_vectors = create_word_vectors(counterDict, documents)
+    result = examine_similarity(counterDict, list_of_word_vectors, search_doc)
+    return result
+
+
+
+#Testing
+path = "Test_textfiles/"
+search_doc = 'The sky is blue, and the grass is green.'
+print(text_similarity(path, search_doc))
